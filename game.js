@@ -156,6 +156,10 @@ function drawShip() {
     }
     
     ctx.restore();
+    
+    // Reset shadow
+    ctx.shadowBlur = 0;
+    ctx.shadowColor = 'transparent';
 }
 
 // Draw asteroid
@@ -186,6 +190,10 @@ function drawAsteroid(asteroid) {
     ctx.stroke();
     
     ctx.restore();
+    
+    // Reset shadow
+    ctx.shadowBlur = 0;
+    ctx.shadowColor = 'transparent';
 }
 
 // Draw bullet
@@ -198,6 +206,10 @@ function drawBullet(bullet) {
     ctx.arc(bullet.x, bullet.y, 2, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
+    
+    // Reset shadow
+    ctx.shadowBlur = 0;
+    ctx.shadowColor = 'transparent';
 }
 
 // Draw particle
@@ -211,6 +223,10 @@ function drawParticle(particle) {
     ctx.arc(particle.x, particle.y, 2, 0, Math.PI * 2);
     ctx.fill();
     ctx.globalAlpha = 1;
+    
+    // Reset shadow
+    ctx.shadowBlur = 0;
+    ctx.shadowColor = 'transparent';
 }
 
 // Distance calculation
