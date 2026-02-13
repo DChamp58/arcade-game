@@ -187,19 +187,16 @@ function drawAsteroid(asteroid) {
 
 // Draw bullet
 function drawBullet(bullet) {
-    ctx.save();
     ctx.fillStyle = '#ffff00';
     ctx.shadowBlur = 10;
     ctx.shadowColor = '#ffff00';
     ctx.beginPath();
     ctx.arc(bullet.x, bullet.y, 2, 0, Math.PI * 2);
     ctx.fill();
-    ctx.restore();
 }
 
 // Draw particle
 function drawParticle(particle) {
-    ctx.save();
     const alpha = particle.life / particle.maxLife;
     ctx.fillStyle = particle.color;
     ctx.globalAlpha = alpha;
@@ -208,7 +205,7 @@ function drawParticle(particle) {
     ctx.beginPath();
     ctx.arc(particle.x, particle.y, 2, 0, Math.PI * 2);
     ctx.fill();
-    ctx.restore();
+    ctx.globalAlpha = 1;
 }
 
 // Distance calculation
@@ -388,6 +385,9 @@ function draw() {
     // Clear canvas
     ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Reset shadow
+    ctx.shadowBlur = 0;
     
     // Draw particles
     particles.forEach(drawParticle);
