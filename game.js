@@ -187,12 +187,14 @@ function drawAsteroid(asteroid) {
 
 // Draw bullet
 function drawBullet(bullet) {
+    ctx.save();
     ctx.fillStyle = '#ffff00';
     ctx.shadowBlur = 10;
     ctx.shadowColor = '#ffff00';
     ctx.beginPath();
     ctx.arc(bullet.x, bullet.y, 2, 0, Math.PI * 2);
     ctx.fill();
+    ctx.restore();
 }
 
 // Draw particle
