@@ -4,8 +4,10 @@ const ctx = canvas.getContext('2d');
 
 // Game state
 let gameRunning = true;
+let gamePaused = false;
 let score = 0;
 let lives = 3;
+let money = 0;
 
 // Ship object
 const ship = {
@@ -20,7 +22,19 @@ const ship = {
         y: 0
     },
     canShoot: true,
-    shootDelay: 250
+    shootDelay: 250,
+    weapon: 'normal', // normal, spread, rapid, laser
+    speedLevel: 1,
+    maxLives: 3
+};
+
+// Upgrades and costs
+const upgrades = {
+    spreadShot: { owned: false, cost: 100 },
+    rapidFire: { owned: false, cost: 150 },
+    laserBeam: { owned: false, cost: 200 },
+    speedBoost: { level: 1, cost: 80, maxLevel: 3 },
+    extraLife: { cost: 120 }
 };
 
 // Game constants
@@ -30,11 +44,13 @@ const TURN_SPEED = 0.08;
 const ASTEROID_SPEED = 1.5;
 const BULLET_SPEED = 5;
 const BULLET_LIFETIME = 60;
+const LASER_LIFETIME = 30;
 
 // Arrays for game objects
 let asteroids = [];
 let bullets = [];
 let particles = [];
+let lasers = [];
 
 // Keyboard controls
 const keys = {
@@ -50,9 +66,14 @@ document.addEventListener('keydown', (e) => {
         e.preventDefault();
         keys[e.key] = true;
         
-        if (e.key === ' ' && ship.canShoot && gameRunning) {
-            shootBullet();
+        if (e.key === ' ' && ship.canShoot && gameRunning && !gamePaused) {
+            shootWeapon();
         }
+    }
+    
+    // Toggle shop with 'S' key
+    if (e.key.toLowerCase() === 's' && gameRunning) {
+        toggleShop();
     }
 });
 
@@ -64,6 +85,107 @@ document.addEventListener('keyup', (e) => {
 });
 
 document.getElementById('restartBtn').addEventListener('click', restartGame);
+document.getElementById('closeShop').addEventListener('click', toggleShop);
+
+// Shop button handlers
+document.getElementById('buySpread').addEventListener('click', () => buyUpgrade('spreadShot'));
+document.getElementById('buyRapid').addEventListener('click', () => buyUpgrade('rapidFire'));
+document.getElementById('buyLaser').addEventListener('click', () => buyUpgrade('laserBeam'));
+document.getElementById('buySpeed').addEventListener('click', () => buyUpgrade('speedBoost'));
+document.getElementById('buyLife').addEventListener('click', () => buyUpgrade('extraLife'));
+
+// Toggle shop
+function toggleShop() {
+    gamePaused = !gamePaused;
+    const shopEl = document.getElementById('shop');
+    shopEl.classList.toggle('hidden');
+    updateShopUI();
+}
+
+// Update shop UI
+function updateShopUI() {
+    document.getElementById('shopMoney').textContent = money;
+    
+    // Update button states
+    const spreadBtn = document.getElementById('buySpread');
+    const rapidBtn = document.getElementById('buyRapid');
+    const laserBtn = document.getElementById('buyLaser');
+    const speedBtn = document.getElementById('buySpeed');
+    const lifeBtn = document.getElementById('buyLife');
+    
+    // Spread shot
+    if (upgrades.spreadShot.owned) {
+        spreadBtn.textContent = 'OWNED';
+        spreadBtn.disabled = true;
+    } else {
+        spreadBtn.disabled = money < upgrades.spreadShot.cost;
+    }
+    
+    // Rapid fire
+    if (upgrades.rapidFire.owned) {
+        rapidBtn.textContent = 'OWNED';
+        rapidBtn.disabled = true;
+    } else {
+        rapidBtn.disabled = money < upgrades.rapidFire.cost;
+    }
+    
+    // Laser beam
+    if (upgrades.laserBeam.owned) {
+        laserBtn.textContent = 'OWNED';
+        laserBtn.disabled = true;
+    } else {
+        laserBtn.disabled = money < upgrades.laserBeam.cost;
+    }
+    
+    // Speed boost
+    if (upgrades.speedBoost.level >= upgrades.speedBoost.maxLevel) {
+        speedBtn.textContent = 'MAX LEVEL';
+        speedBtn.disabled = true;
+    } else {
+        speedBtn.disabled = money < upgrades.speedBoost.cost;
+        document.getElementById('speedLevel').textContent = upgrades.speedBoost.level;
+    }
+    
+    // Extra life
+    lifeBtn.disabled = money < upgrades.extraLife.cost;
+}
+
+// Buy upgrade
+function buyUpgrade(type) {
+    if (type === 'spreadShot' && !upgrades.spreadShot.owned && money >= upgrades.spreadShot.cost) {
+        money -= upgrades.spreadShot.cost;
+        upgrades.spreadShot.owned = true;
+        ship.weapon = 'spread';
+        document.getElementById('currentWeapon').textContent = 'SPREAD SHOT';
+    }
+    else if (type === 'rapidFire' && !upgrades.rapidFire.owned && money >= upgrades.rapidFire.cost) {
+        money -= upgrades.rapidFire.cost;
+        upgrades.rapidFire.owned = true;
+        ship.weapon = 'rapid';
+        ship.shootDelay = 150;
+        document.getElementById('currentWeapon').textContent = 'RAPID FIRE';
+    }
+    else if (type === 'laserBeam' && !upgrades.laserBeam.owned && money >= upgrades.laserBeam.cost) {
+        money -= upgrades.laserBeam.cost;
+        upgrades.laserBeam.owned = true;
+        ship.weapon = 'laser';
+        document.getElementById('currentWeapon').textContent = 'LASER BEAM';
+    }
+    else if (type === 'speedBoost' && upgrades.speedBoost.level < upgrades.speedBoost.maxLevel && money >= upgrades.speedBoost.cost) {
+        money -= upgrades.speedBoost.cost;
+        upgrades.speedBoost.level++;
+        upgrades.speedBoost.cost = Math.floor(upgrades.speedBoost.cost * 1.5);
+    }
+    else if (type === 'extraLife' && money >= upgrades.extraLife.cost) {
+        money -= upgrades.extraLife.cost;
+        lives++;
+        ship.maxLives++;
+        document.getElementById('lives').textContent = lives;
+    }
+    
+    document.getElementById('money').textContent = money;
+    updateShopUI();
+}
 
 // Initialize asteroids
 function createAsteroids(count) {
@@ -89,9 +211,32 @@ function createAsteroids(count) {
     }
 }
 
-// Shoot bullet
-function shootBullet() {
+// Shoot weapon based on type
+function shootWeapon() {
     const angle = ship.angle - Math.PI / 2;
+    
+    if (ship.weapon === 'normal') {
+        shootBullet(angle);
+    }
+    else if (ship.weapon === 'spread') {
+        // Shoot 3 bullets in a spread
+        shootBullet(angle - 0.2);
+        shootBullet(angle);
+        shootBullet(angle + 0.2);
+    }
+    else if (ship.weapon === 'rapid') {
+        shootBullet(angle);
+    }
+    else if (ship.weapon === 'laser') {
+        shootLaser(angle);
+    }
+    
+    ship.canShoot = false;
+    setTimeout(() => ship.canShoot = true, ship.shootDelay);
+}
+
+// Shoot bullet
+function shootBullet(angle) {
     bullets.push({
         x: ship.x + Math.cos(angle) * ship.radius,
         y: ship.y + Math.sin(angle) * ship.radius,
@@ -99,9 +244,18 @@ function shootBullet() {
         yv: Math.sin(angle) * BULLET_SPEED,
         life: BULLET_LIFETIME
     });
-    
-    ship.canShoot = false;
-    setTimeout(() => ship.canShoot = true, ship.shootDelay);
+}
+
+// Shoot laser
+function shootLaser(angle) {
+    lasers.push({
+        x: ship.x,
+        y: ship.y,
+        angle: angle,
+        life: LASER_LIFETIME,
+        length: 0,
+        maxLength: 800
+    });
 }
 
 // Create explosion particles
@@ -144,7 +298,7 @@ function drawShip() {
     ctx.shadowBlur = 0;
     
     // Thrust flame
-    if (ship.thrusting && gameRunning) {
+    if (ship.thrusting && gameRunning && !gamePaused) {
         ctx.fillStyle = keys.ArrowUp && Math.random() > 0.5 ? '#ff00ff' : '#ffff00';
         ctx.shadowBlur = 10;
         ctx.shadowColor = '#ff00ff';
@@ -205,6 +359,25 @@ function drawBullet(bullet) {
     ctx.shadowBlur = 0;
 }
 
+// Draw laser
+function drawLaser(laser) {
+    const endX = laser.x + Math.cos(laser.angle) * laser.length;
+    const endY = laser.y + Math.sin(laser.angle) * laser.length;
+    
+    ctx.strokeStyle = '#00ff00';
+    ctx.lineWidth = 3;
+    ctx.shadowBlur = 15;
+    ctx.shadowColor = '#00ff00';
+    
+    ctx.beginPath();
+    ctx.moveTo(laser.x, laser.y);
+    ctx.lineTo(endX, endY);
+    ctx.stroke();
+    
+    // Reset shadow
+    ctx.shadowBlur = 0;
+}
+
 // Draw particle
 function drawParticle(particle) {
     const alpha = particle.life / particle.maxLife;
@@ -223,6 +396,37 @@ function drawParticle(particle) {
 // Distance calculation
 function distanceBetween(x1, y1, x2, y2) {
     return Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+}
+
+// Check if point is near line segment
+function pointToLineDistance(px, py, x1, y1, x2, y2) {
+    const A = px - x1;
+    const B = py - y1;
+    const C = x2 - x1;
+    const D = y2 - y1;
+    
+    const dot = A * C + B * D;
+    const lenSq = C * C + D * D;
+    let param = -1;
+    
+    if (lenSq !== 0) param = dot / lenSq;
+    
+    let xx, yy;
+    
+    if (param < 0) {
+        xx = x1;
+        yy = y1;
+    } else if (param > 1) {
+        xx = x2;
+        yy = y2;
+    } else {
+        xx = x1 + param * C;
+        yy = y1 + param * D;
+    }
+    
+    const dx = px - xx;
+    const dy = py - yy;
+    return Math.sqrt(dx * dx + dy * dy);
 }
 
 // Wrap around screen
@@ -252,6 +456,17 @@ function splitAsteroid(asteroid) {
     }
 }
 
+// Add money based on asteroid size
+function addMoney(asteroidRadius) {
+    let earned = 0;
+    if (asteroidRadius >= 40) earned = 10;
+    else if (asteroidRadius >= 20) earned = 5;
+    else earned = 2;
+    
+    money += earned;
+    document.getElementById('money').textContent = money;
+}
+
 // Lose life
 function loseLife() {
     lives--;
@@ -274,17 +489,21 @@ function loseLife() {
 function gameOver() {
     gameRunning = false;
     document.getElementById('finalScore').textContent = score;
+    document.getElementById('finalMoney').textContent = money;
     document.getElementById('gameOver').classList.remove('hidden');
 }
 
 // Restart game
 function restartGame() {
     gameRunning = true;
+    gamePaused = false;
     score = 0;
-    lives = 3;
+    lives = ship.maxLives;
+    money = 0;
     asteroids = [];
     bullets = [];
     particles = [];
+    lasers = [];
     
     ship.x = canvas.width / 2;
     ship.y = canvas.height / 2;
@@ -294,14 +513,16 @@ function restartGame() {
     
     document.getElementById('score').textContent = score;
     document.getElementById('lives').textContent = lives;
+    document.getElementById('money').textContent = money;
     document.getElementById('gameOver').classList.add('hidden');
+    document.getElementById('shop').classList.add('hidden');
     
     createAsteroids(5);
 }
 
 // Update game
 function update() {
-    if (!gameRunning) return;
+    if (!gameRunning || gamePaused) return;
     
     // Ship rotation
     if (keys.ArrowLeft) {
@@ -311,12 +532,13 @@ function update() {
         ship.angle += TURN_SPEED;
     }
     
-    // Ship thrust
+    // Ship thrust with speed upgrade
     ship.thrusting = keys.ArrowUp;
     if (ship.thrusting) {
         const angle = ship.angle - Math.PI / 2;
-        ship.thrust.x += Math.cos(angle) * SHIP_THRUST;
-        ship.thrust.y += Math.sin(angle) * SHIP_THRUST;
+        const thrustPower = SHIP_THRUST * upgrades.speedBoost.level;
+        ship.thrust.x += Math.cos(angle) * thrustPower;
+        ship.thrust.y += Math.sin(angle) * thrustPower;
     }
     
     // Apply friction
@@ -363,6 +585,7 @@ function update() {
             const asteroid = asteroids[j];
             if (distanceBetween(bullet.x, bullet.y, asteroid.x, asteroid.y) < asteroid.radius) {
                 createExplosion(asteroid.x, asteroid.y, '#ff00ff', 15);
+                addMoney(asteroid.radius);
                 splitAsteroid(asteroid);
                 asteroids.splice(j, 1);
                 bullets.splice(i, 1);
@@ -370,6 +593,41 @@ function update() {
                 score += 10;
                 document.getElementById('score').textContent = score;
                 break;
+            }
+        }
+    }
+    
+    // Update lasers
+    for (let i = lasers.length - 1; i >= 0; i--) {
+        const laser = lasers[i];
+        laser.life--;
+        
+        // Extend laser
+        if (laser.length < laser.maxLength) {
+            laser.length += 40;
+        }
+        
+        if (laser.life <= 0) {
+            lasers.splice(i, 1);
+            continue;
+        }
+        
+        // Check collision with asteroids
+        const endX = laser.x + Math.cos(laser.angle) * laser.length;
+        const endY = laser.y + Math.sin(laser.angle) * laser.length;
+        
+        for (let j = asteroids.length - 1; j >= 0; j--) {
+            const asteroid = asteroids[j];
+            const dist = pointToLineDistance(asteroid.x, asteroid.y, laser.x, laser.y, endX, endY);
+            
+            if (dist < asteroid.radius) {
+                createExplosion(asteroid.x, asteroid.y, '#00ff00', 15);
+                addMoney(asteroid.radius);
+                splitAsteroid(asteroid);
+                asteroids.splice(j, 1);
+                
+                score += 10;
+                document.getElementById('score').textContent = score;
             }
         }
     }
@@ -409,12 +667,26 @@ function draw() {
     // Draw bullets
     bullets.forEach(drawBullet);
     
+    // Draw lasers
+    lasers.forEach(drawLaser);
+    
     // Draw asteroids
     asteroids.forEach(drawAsteroid);
     
     // Draw ship
     if (gameRunning) {
         drawShip();
+    }
+    
+    // Draw pause text
+    if (gamePaused) {
+        ctx.fillStyle = '#ffff00';
+        ctx.font = '30px "Courier New"';
+        ctx.textAlign = 'center';
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = '#ffff00';
+        ctx.fillText('PAUSED - SHOP OPEN', canvas.width / 2, 50);
+        ctx.shadowBlur = 0;
     }
     
     // Final reset to ensure clean state

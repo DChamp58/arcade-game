@@ -57,12 +57,12 @@ h1 {
     letter-spacing: 3px;
 }
 
-.score, .lives {
+.score, .lives, .money {
     color: #00ffff;
     text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
 }
 
-.score span, .lives span {
+.score span, .lives span, .money span {
     color: #ff00ff;
     text-shadow: 0 0 10px #ff00ff, 0 0 20px #ff00ff;
     font-weight: bold;
@@ -164,4 +164,163 @@ h1 {
 
 #restartBtn:active {
     transform: scale(0.95);
+}
+
+.weapon-display {
+    margin-top: 10px;
+    font-size: 1.1em;
+    color: #00ff00;
+    text-shadow: 0 0 10px #00ff00;
+    letter-spacing: 2px;
+}
+
+.weapon-display span {
+    color: #ffff00;
+    text-shadow: 0 0 10px #ffff00;
+    font-weight: bold;
+}
+
+.shop {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.95);
+    border: 4px solid #00ffff;
+    border-radius: 15px;
+    padding: 30px 40px;
+    box-shadow: 0 0 30px rgba(0, 255, 255, 0.8),
+                0 0 60px rgba(255, 0, 255, 0.6);
+    z-index: 10;
+    animation: fadeIn 0.3s ease-in;
+    max-height: 80vh;
+    overflow-y: auto;
+    min-width: 500px;
+}
+
+.shop.hidden {
+    display: none;
+}
+
+.shop h2 {
+    font-size: 2.5em;
+    margin-bottom: 15px;
+    color: #00ffff;
+    text-shadow: 0 0 20px #00ffff;
+    letter-spacing: 6px;
+    text-align: center;
+}
+
+.shop-money {
+    text-align: center;
+    font-size: 1.5em;
+    margin-bottom: 25px;
+    color: #ffff00;
+    text-shadow: 0 0 10px #ffff00;
+    letter-spacing: 3px;
+}
+
+.shop-money span {
+    color: #00ff00;
+    text-shadow: 0 0 15px #00ff00;
+    font-size: 1.2em;
+}
+
+.shop-section {
+    margin-bottom: 25px;
+}
+
+.shop-section h3 {
+    font-size: 1.5em;
+    margin-bottom: 15px;
+    color: #ff00ff;
+    text-shadow: 0 0 15px #ff00ff;
+    letter-spacing: 4px;
+    border-bottom: 2px solid #ff00ff;
+    padding-bottom: 8px;
+}
+
+.shop-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding: 15px;
+    background: rgba(255, 0, 255, 0.1);
+    border: 2px solid rgba(255, 0, 255, 0.3);
+    border-radius: 8px;
+}
+
+.item-info {
+    flex: 1;
+}
+
+.item-name {
+    font-size: 1.2em;
+    color: #00ffff;
+    text-shadow: 0 0 10px #00ffff;
+    letter-spacing: 2px;
+    margin-bottom: 5px;
+}
+
+.item-desc {
+    font-size: 0.9em;
+    color: #aaa;
+    letter-spacing: 1px;
+}
+
+.shop-btn {
+    font-family: 'Courier New', monospace;
+    font-size: 1em;
+    font-weight: bold;
+    letter-spacing: 2px;
+    padding: 10px 20px;
+    background: transparent;
+    color: #00ff00;
+    border: 2px solid #00ff00;
+    border-radius: 6px;
+    cursor: pointer;
+    text-shadow: 0 0 10px #00ff00;
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.4);
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.shop-btn:hover:not(:disabled) {
+    background: #00ff00;
+    color: #000;
+    text-shadow: none;
+    box-shadow: 0 0 20px rgba(0, 255, 0, 1);
+    transform: scale(1.05);
+}
+
+.shop-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.close-shop-btn {
+    font-family: 'Courier New', monospace;
+    font-size: 1.2em;
+    font-weight: bold;
+    letter-spacing: 3px;
+    padding: 12px 30px;
+    background: transparent;
+    color: #ff00ff;
+    border: 3px solid #ff00ff;
+    border-radius: 8px;
+    cursor: pointer;
+    text-shadow: 0 0 10px #ff00ff;
+    box-shadow: 0 0 15px rgba(255, 0, 255, 0.6);
+    transition: all 0.3s ease;
+    width: 100%;
+    margin-top: 20px;
+}
+
+.close-shop-btn:hover {
+    background: #ff00ff;
+    color: #000;
+    text-shadow: none;
+    box-shadow: 0 0 25px rgba(255, 0, 255, 1);
+    transform: scale(1.02);
 }
