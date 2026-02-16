@@ -140,9 +140,13 @@ function drawShip() {
     ctx.closePath();
     ctx.stroke();
     
+    // Reset shadow for flame
+    ctx.shadowBlur = 0;
+    
     // Thrust flame
     if (ship.thrusting && gameRunning) {
         ctx.fillStyle = keys.ArrowUp && Math.random() > 0.5 ? '#ff00ff' : '#ffff00';
+        ctx.shadowBlur = 10;
         ctx.shadowColor = '#ff00ff';
         ctx.beginPath();
         ctx.moveTo(0, ship.radius);
@@ -150,6 +154,7 @@ function drawShip() {
         ctx.lineTo(-ship.radius * 0.3, ship.radius + 10 + Math.random() * 5);
         ctx.closePath();
         ctx.fill();
+        ctx.shadowBlur = 0;
     }
     
     ctx.restore();
@@ -182,6 +187,9 @@ function drawAsteroid(asteroid) {
     ctx.closePath();
     ctx.stroke();
     
+    // Reset shadow
+    ctx.shadowBlur = 0;
+    
     ctx.restore();
 }
 
@@ -193,6 +201,7 @@ function drawBullet(bullet) {
     ctx.beginPath();
     ctx.arc(bullet.x, bullet.y, 2, 0, Math.PI * 2);
     ctx.fill();
+    // Reset shadow
     ctx.shadowBlur = 0;
 }
 
@@ -206,6 +215,8 @@ function drawParticle(particle) {
     ctx.beginPath();
     ctx.arc(particle.x, particle.y, 2, 0, Math.PI * 2);
     ctx.fill();
+    // Reset shadow and alpha
+    ctx.shadowBlur = 0;
     ctx.globalAlpha = 1;
 }
 
@@ -387,8 +398,10 @@ function draw() {
     ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // Reset shadow
+    // Reset all canvas shadow/alpha settings at start of draw
     ctx.shadowBlur = 0;
+    ctx.shadowColor = 'transparent';
+    ctx.globalAlpha = 1;
     
     // Draw particles
     particles.forEach(drawParticle);
@@ -403,6 +416,10 @@ function draw() {
     if (gameRunning) {
         drawShip();
     }
+    
+    // Final reset to ensure clean state
+    ctx.shadowBlur = 0;
+    ctx.globalAlpha = 1;
 }
 
 // Game loop
