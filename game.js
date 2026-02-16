@@ -193,6 +193,7 @@ function drawBullet(bullet) {
     ctx.beginPath();
     ctx.arc(bullet.x, bullet.y, 2, 0, Math.PI * 2);
     ctx.fill();
+    ctx.shadowBlur = 0;
 }
 
 // Draw particle
