@@ -8,6 +8,11 @@ let gamePaused = false;
 let score = 0;
 let lives = 3;
 let money = 0;
+let level = 1;
+let asteroidsDestroyed = 0;
+let asteroidsNeededForLevel = 10;
+let levelingUp = false;
+let levelUpTimer = 0;
 
 // Ship object
 const ship = {
@@ -41,7 +46,7 @@ const upgrades = {
 const FRICTION = 0.98;
 const SHIP_THRUST = 0.15;
 const TURN_SPEED = 0.08;
-const ASTEROID_SPEED = 1.5;
+const BASE_ASTEROID_SPEED = 1.5;
 const BULLET_SPEED = 5;
 const BULLET_LIFETIME = 60;
 const LASER_LIFETIME = 30;
@@ -187,8 +192,20 @@ function buyUpgrade(type) {
     updateShopUI();
 }
 
+// Get asteroid speed based on level
+function getAsteroidSpeed() {
+    return BASE_ASTEROID_SPEED * (1 + (level - 1) * 0.15);
+}
+
+// Get asteroid count for level
+function getAsteroidCount() {
+    return Math.min(5 + level, 12); // Cap at 12 asteroids
+}
+
 // Initialize asteroids
 function createAsteroids(count) {
+    const speed = getAsteroidSpeed();
+    
     for (let i = 0; i < count; i++) {
         let x, y;
         // Spawn away from ship
@@ -200,8 +217,8 @@ function createAsteroids(count) {
         asteroids.push({
             x: x,
             y: y,
-            xv: (Math.random() - 0.5) * ASTEROID_SPEED,
-            yv: (Math.random() - 0.5) * ASTEROID_SPEED,
+            xv: (Math.random() - 0.5) * speed,
+            yv: (Math.random() - 0.5) * speed,
             radius: 40,
             angle: Math.random() * Math.PI * 2,
             rotation: (Math.random() - 0.5) * 0.05,
@@ -209,6 +226,25 @@ function createAsteroids(count) {
             jaggedness: 0.3 + Math.random() * 0.3
         });
     }
+}
+
+// Level up function
+function levelUp() {
+    level++;
+    asteroidsDestroyed = 0;
+    asteroidsNeededForLevel = Math.floor(10 + level * 2);
+    levelingUp = true;
+    levelUpTimer = 120; // 2 seconds at 60fps
+    
+    // Bonus money for leveling up
+    const bonus = level * 50;
+    money += bonus;
+    
+    document.getElementById('level').textContent = level;
+    document.getElementById('money').textContent = money;
+    
+    // Create explosion effect
+    createExplosion(canvas.width / 2, canvas.height / 2, '#ffff00', 50);
 }
 
 // Shoot weapon based on type
@@ -254,7 +290,7 @@ function shootLaser(angle) {
         angle: angle,
         life: LASER_LIFETIME,
         length: 0,
-        maxLength: 800
+        maxLength: 1200
     });
 }
 
@@ -439,13 +475,15 @@ function wrapPosition(obj) {
 
 // Split asteroid
 function splitAsteroid(asteroid) {
+    const speed = getAsteroidSpeed();
+    
     if (asteroid.radius > 15) {
         for (let i = 0; i < 2; i++) {
             asteroids.push({
                 x: asteroid.x,
                 y: asteroid.y,
-                xv: (Math.random() - 0.5) * ASTEROID_SPEED * 1.5,
-                yv: (Math.random() - 0.5) * ASTEROID_SPEED * 1.5,
+                xv: (Math.random() - 0.5) * speed * 1.5,
+                yv: (Math.random() - 0.5) * speed * 1.5,
                 radius: asteroid.radius / 2,
                 angle: Math.random() * Math.PI * 2,
                 rotation: (Math.random() - 0.5) * 0.08,
@@ -465,6 +503,16 @@ function addMoney(asteroidRadius) {
     
     money += earned;
     document.getElementById('money').textContent = money;
+}
+
+// Destroy asteroid (called when asteroid is destroyed)
+function destroyAsteroid(asteroid, fromBullet = true) {
+    asteroidsDestroyed++;
+    
+    // Check for level up
+    if (asteroidsDestroyed >= asteroidsNeededForLevel) {
+        levelUp();
+    }
 }
 
 // Lose life
@@ -490,6 +538,7 @@ function gameOver() {
     gameRunning = false;
     document.getElementById('finalScore').textContent = score;
     document.getElementById('finalMoney').textContent = money;
+    document.getElementById('finalLevel').textContent = level;
     document.getElementById('gameOver').classList.remove('hidden');
 }
 
@@ -500,6 +549,11 @@ function restartGame() {
     score = 0;
     lives = ship.maxLives;
     money = 0;
+    level = 1;
+    asteroidsDestroyed = 0;
+    asteroidsNeededForLevel = 10;
+    levelingUp = false;
+    levelUpTimer = 0;
     asteroids = [];
     bullets = [];
     particles = [];
@@ -514,15 +568,24 @@ function restartGame() {
     document.getElementById('score').textContent = score;
     document.getElementById('lives').textContent = lives;
     document.getElementById('money').textContent = money;
+    document.getElementById('level').textContent = level;
     document.getElementById('gameOver').classList.add('hidden');
     document.getElementById('shop').classList.add('hidden');
     
-    createAsteroids(5);
+    createAsteroids(getAsteroidCount());
 }
 
 // Update game
 function update() {
     if (!gameRunning || gamePaused) return;
+    
+    // Update level up timer
+    if (levelingUp) {
+        levelUpTimer--;
+        if (levelUpTimer <= 0) {
+            levelingUp = false;
+        }
+    }
     
     // Ship rotation
     if (keys.ArrowLeft) {
@@ -586,6 +649,7 @@ function update() {
             if (distanceBetween(bullet.x, bullet.y, asteroid.x, asteroid.y) < asteroid.radius) {
                 createExplosion(asteroid.x, asteroid.y, '#ff00ff', 15);
                 addMoney(asteroid.radius);
+                destroyAsteroid(asteroid);
                 splitAsteroid(asteroid);
                 asteroids.splice(j, 1);
                 bullets.splice(i, 1);
@@ -623,6 +687,7 @@ function update() {
             if (dist < asteroid.radius) {
                 createExplosion(asteroid.x, asteroid.y, '#00ff00', 15);
                 addMoney(asteroid.radius);
+                destroyAsteroid(asteroid);
                 splitAsteroid(asteroid);
                 asteroids.splice(j, 1);
                 
@@ -644,9 +709,9 @@ function update() {
         }
     }
     
-    // Spawn new asteroids if none left
-    if (asteroids.length === 0) {
-        createAsteroids(5 + Math.floor(score / 100));
+    // Spawn new asteroids if none left (and not currently leveling up)
+    if (asteroids.length === 0 && !levelingUp) {
+        createAsteroids(getAsteroidCount());
     }
 }
 
@@ -678,6 +743,25 @@ function draw() {
         drawShip();
     }
     
+    // Draw level up message
+    if (levelingUp) {
+        const alpha = levelUpTimer / 120;
+        ctx.globalAlpha = alpha;
+        
+        ctx.fillStyle = '#ffff00';
+        ctx.font = 'bold 60px "Courier New"';
+        ctx.textAlign = 'center';
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = '#ffff00';
+        ctx.fillText(`LEVEL ${level}`, canvas.width / 2, canvas.height / 2 - 30);
+        
+        ctx.font = '30px "Courier New"';
+        ctx.fillText(`+$${level * 50} BONUS`, canvas.width / 2, canvas.height / 2 + 20);
+        
+        ctx.shadowBlur = 0;
+        ctx.globalAlpha = 1;
+    }
+    
     // Draw pause text
     if (gamePaused) {
         ctx.fillStyle = '#ffff00';
@@ -702,5 +786,5 @@ function gameLoop() {
 }
 
 // Start game
-createAsteroids(5);
+createAsteroids(getAsteroidCount());
 gameLoop();

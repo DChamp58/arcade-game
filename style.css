@@ -55,14 +55,15 @@ h1 {
     gap: 40px;
     font-size: 1.3em;
     letter-spacing: 3px;
+    margin-bottom: 10px;
 }
 
-.score, .lives, .money {
+.score, .lives, .money, .level {
     color: #00ffff;
     text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
 }
 
-.score span, .lives span, .money span {
+.score span, .lives span, .money span, .level span {
     color: #ff00ff;
     text-shadow: 0 0 10px #ff00ff, 0 0 20px #ff00ff;
     font-weight: bold;
@@ -166,8 +167,28 @@ h1 {
     transform: scale(0.95);
 }
 
+.level-info {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    font-size: 1.2em;
+    letter-spacing: 3px;
+    margin-bottom: 10px;
+}
+
+.level, .progress {
+    color: #ffff00;
+    text-shadow: 0 0 10px #ffff00, 0 0 20px #ffff00;
+}
+
+.level span, .progress span {
+    color: #ff00ff;
+    text-shadow: 0 0 10px #ff00ff, 0 0 20px #ff00ff;
+    font-weight: bold;
+}
+
 .weapon-display {
-    margin-top: 10px;
+    margin-top: 5px;
     font-size: 1.1em;
     color: #00ff00;
     text-shadow: 0 0 10px #00ff00;
@@ -178,6 +199,54 @@ h1 {
     color: #ffff00;
     text-shadow: 0 0 10px #ffff00;
     font-weight: bold;
+}
+
+.level-up-message {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.95);
+    border: 4px solid #ffff00;
+    border-radius: 15px;
+    padding: 40px 80px;
+    box-shadow: 0 0 30px rgba(255, 255, 0, 0.8),
+                0 0 60px rgba(255, 0, 255, 0.6);
+    z-index: 15;
+    animation: levelUpPulse 2s ease-in-out;
+    text-align: center;
+}
+
+@keyframes levelUpPulse {
+    0%, 100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.1);
+        opacity: 1;
+    }
+    90% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
+}
+
+.level-up-message h2 {
+    font-size: 3.5em;
+    margin-bottom: 10px;
+    color: #ffff00;
+    text-shadow: 0 0 20px #ffff00, 0 0 40px #ffff00;
+    letter-spacing: 8px;
+}
+
+.level-up-message p {
+    font-size: 1.8em;
+    color: #00ff00;
+    text-shadow: 0 0 15px #00ff00;
+    letter-spacing: 4px;
 }
 
 .shop {
